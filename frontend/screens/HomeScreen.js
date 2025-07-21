@@ -40,6 +40,14 @@ const HomeScreen = () => {
         <Text style={styles.buttonText}>🧠 Talk to MindMate</Text>
       </TouchableOpacity>
 
+      {/* New button for Mood History */}
+      <TouchableOpacity
+        style={styles.buttonHistory}
+        onPress={() => navigation.navigate('MoodHistoryScreen')} // Navigate to MoodHistoryScreen
+      >
+        <Text style={styles.buttonText}>📅 View Mood History</Text>
+      </TouchableOpacity>
+
       <View style={styles.verseContainer}>
         <Text style={styles.verseTitle}>📖 Quranic Verse of the Day</Text>
         <Text style={styles.verse}>{quranicVerse}</Text>
@@ -83,6 +91,14 @@ const styles = StyleSheet.create({
   },
   buttonSecondary: {
     backgroundColor: '#7986cb',
+    padding: 14,
+    borderRadius: 10,
+    marginTop: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  buttonHistory: {
+    backgroundColor: '#6a1b9a', // a nice purple color for variety
     padding: 14,
     borderRadius: 10,
     marginTop: 10,

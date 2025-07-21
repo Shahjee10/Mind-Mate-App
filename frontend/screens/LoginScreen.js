@@ -20,7 +20,7 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-  const { setUserToken } = useContext(AuthContext); // Get setUserToken from context
+  const { login } = useContext(AuthContext); // <-- Updated: use login() instead of setUserToken
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -34,10 +34,17 @@ const LoginScreen = () => {
         email,
         password,
       });
-      // Save the token to context for authenticated requests
-      setUserToken(response.data.token); // <-- Save JWT token
-      Alert.alert('Success', 'Logged in successfully');
-      navigation.navigate('HomeScreen'); // Navigate to HomeScreen after login
+
+      // Backend must return both token and user info
+      const { token, user } = response.data;
+
+      if (token && user) {
+        await login(token, user); // Persist token & user info in context + AsyncStorage
+        Alert.alert('Success', 'Logged in successfully');
+        navigation.navigate('HomeScreen'); // Navigate after login
+      } else {
+        Alert.alert('Login Failed', 'Invalid response from server');
+      }
     } catch (error) {
       Alert.alert('Login Failed', error?.response?.data?.message || 'Something went wrong');
     } finally {
@@ -49,15 +56,14 @@ const LoginScreen = () => {
     try {
       setLoading(true);
       const result = await loginWithGithub();
-      // Save the token to context if your backend returns it
+      // Your existing GitHub login logic untouched
       if (result && result.token) {
-        setUserToken(result.token); // <-- Save JWT token
+        await login(result.token, result.user || null); // Save user info if available
       }
-      // Show success alert and navigate to HomeScreen after user presses OK
       Alert.alert('Success', 'GitHub login successful!', [
         {
           text: 'OK',
-          onPress: () => navigation.navigate('HomeScreen'), // Navigate to HomeScreen
+          onPress: () => navigation.navigate('HomeScreen'),
         },
       ]);
     } catch (error) {
