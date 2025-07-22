@@ -124,8 +124,10 @@ const MoodHistoryScreen = () => {
 
           return (
             <View style={[styles.card, { backgroundColor: config.color + 'D0' }]}>
-              <View>
-                <Text style={styles.note}>{item.note || 'No notes added'}</Text>
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.note} numberOfLines={3} ellipsizeMode="tail">
+                  {item.note || 'No notes added'}
+                </Text>
                 <Text style={styles.time}>
                   <Text>Time: </Text>
                   <Text>{time}</Text>
