@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.08,
   },
   subText: {
-    fontSize: 30,
+    fontSize: 22,
     color: '#222',
     textAlign: 'center',
     marginBottom: height * 0.03,

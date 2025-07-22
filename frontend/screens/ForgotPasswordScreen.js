@@ -16,7 +16,6 @@ import { useNavigation } from '@react-navigation/native';
 const ForgotPasswordScreen = () => {
   const navigation = useNavigation();
 
-  // Hide the header/navbar for this screen
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
@@ -107,7 +106,8 @@ const ForgotPasswordScreen = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        <Text style={styles.title}>Reset Password</Text>
+        <Text style={styles.title}>Reset Your Password</Text>
+        <Text style={styles.subtitle}>Regain access to your peace of mind</Text>
 
         <TextInput
           style={styles.input}
@@ -188,42 +188,87 @@ export default ForgotPasswordScreen;
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#F5F6FA', // Light grayish-blue background
   },
   scrollContainer: { 
     flexGrow: 1, 
     justifyContent: 'center', 
-    padding: 20,
-    paddingBottom: 40,
+    padding: 15,
+    paddingBottom: 30,
   },
-  title: { fontSize: 32, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  title: { 
+    fontSize: 28, 
+    fontWeight: '600', 
+    marginBottom: 8, 
+    textAlign: 'center', 
+    color: '#2E7D32', // Green for calmness
+    fontFamily: 'cursive',
+  },
+  subtitle: { 
+    fontSize: 14, 
+    color: '#424242', 
+    textAlign: 'center', 
+    marginBottom: 25,
+    fontStyle: 'italic',
+    fontFamily: 'cursive',
+  },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: '#B0BEC5', // Light blue-gray border
+    borderRadius: 12,
     padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
+    marginBottom: 12,
+    fontSize: 14,
+    color: '#424242',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   button: {
-    backgroundColor: '#4CAF50',
-    padding: 14,
-    borderRadius: 8,
+    backgroundColor: '#66BB6A', // Soft green button
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  resendButton: {
-    backgroundColor: '#2196F3',
-    padding: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
+  buttonText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 14 
   },
-  resendText: { color: '#fff', fontWeight: 'bold' },
-  link: { color: '#007BFF', textAlign: 'center', marginTop: 10, fontSize: 16 },
-}); 
+  resendButton: {
+    backgroundColor: '#42A5F5', // Bright blue for resend
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  resendText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 14 
+  },
+  link: { 
+    color: '#1976D2', // Deep blue for link
+    textAlign: 'center', 
+    marginTop: 10, 
+    fontSize: 14,
+    fontFamily: 'cursive',
+  },
+});

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import FunkyBackButton from '../components/FunkyBackButton';
 
+// Array of moods with emoji, value, and description for slider
 const moods = [
   { label: '😊', value: 'happy', description: 'Feeling joyful and light!' },
   { label: '😔', value: 'sad', description: 'A bit down, that’s okay.' },
@@ -22,37 +26,44 @@ const moods = [
   { label: '😐', value: 'neutral', description: 'Just feeling okay.' },
 ];
 
-const MoodInputScreen = ({ navigation }) => {
-  const [selectedMood, setSelectedMood] = useState(null);
+const MoodInputScreen = () => {
+  // State for currently selected mood index in the slider (default neutral)
+  const [selectedMoodIndex, setSelectedMoodIndex] = useState(4);
+  // State for user’s note about their mood
   const [note, setNote] = useState('');
+  // Get auth token from context to authorize API requests
   const { userToken } = useContext(AuthContext);
+  const navigation = useNavigation();
 
-  // For animation scale effect on mood buttons
-  const scaleAnim = useRef(moods.map(() => new Animated.Value(1))).current;
+  // Hide the default top navbar for a cleaner screen
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
 
-  const animateMood = (index) => {
+  // Animated scale for emoji when mood changes
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Trigger emoji scale animation when selected mood changes
+  useEffect(() => {
     Animated.sequence([
-      Animated.timing(scaleAnim[index], {
-        toValue: 1.2,
-        duration: 150,
+      Animated.timing(scaleAnim, {
+        toValue: 1.4,
+        duration: 250,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
-      Animated.timing(scaleAnim[index], {
+      Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 150,
+        duration: 250,
         easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start();
-  };
+  }, [selectedMoodIndex]);
 
-  const handleMoodPress = (mood, index) => {
-    setSelectedMood(mood);
-    animateMood(index);
-  };
-
+  // Function to submit mood and note to backend
   const handleSubmit = async () => {
+    const selectedMood = moods[selectedMoodIndex].value;
     if (!selectedMood) return alert('Please select a mood.');
 
     try {
@@ -67,53 +78,65 @@ const MoodInputScreen = ({ navigation }) => {
         }
       );
 
-      // Show success message and optionally clear state or navigate
-      alert('Mood saved successfully!');
-      setSelectedMood(null);
-      setNote('');
-      // Navigate to SupportScreen and pass the selected mood
-      navigation.navigate('SupportScreen', { mood: selectedMood });
+     alert('Mood saved successfully!');
+setNote('');
+// Navigate to VersePopupScreen and pass the mood
+navigation.navigate('VersePopupScreen', { mood: selectedMood });
+
     } catch (err) {
       console.error(err);
       alert('Error saving mood: ' + (err.response?.data?.message || err.message));
     }
   };
 
+  // Get current mood object from moods array for display
+  const currentMood = moods[selectedMoodIndex];
+
   return (
+    // Adjusts keyboard behavior, especially on iOS
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#f0f7ff' }}
+      style={styles.keyboardAvoid}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {/* Custom funky back arrow button */}
+        <FunkyBackButton onPress={() => navigation.goBack()} />
+
+        {/* Screen heading */}
         <Text style={styles.heading}>How are you feeling today?</Text>
 
-        <View style={styles.moodContainer}>
-          {moods.map((mood, i) => (
-            <TouchableOpacity
-              key={mood.value}
-              activeOpacity={0.8}
-              onPress={() => handleMoodPress(mood.value, i)}
-              style={styles.moodWrapper}
-            >
-              <Animated.View
-                style={[
-                  styles.moodButton,
-                  selectedMood === mood.value && styles.selected,
-                  { transform: [{ scale: scaleAnim[i] }] },
-                ]}
-              >
-                <Text style={styles.moodText}>{mood.label}</Text>
-              </Animated.View>
-              {selectedMood === mood.value && (
-                <Text style={styles.moodDescription}>{mood.description}</Text>
-              )}
-            </TouchableOpacity>
-          ))}
+        {/* Slider container with animated emoji and description */}
+        <View style={styles.sliderContainer}>
+          <Animated.Text
+            style={[styles.emoji, { transform: [{ scale: scaleAnim }] }]}
+          >
+            {currentMood.label}
+          </Animated.Text>
+
+          {/* Mood selection slider */}
+          <Slider
+            style={{ width: '100%', height: 40 }}
+            minimumValue={0}
+            maximumValue={moods.length - 1}
+            step={1}
+            value={selectedMoodIndex}
+            minimumTrackTintColor="#8e44ad" // deep purple
+            maximumTrackTintColor="#c39bd3" // soft lavender
+            thumbTintColor="#6c3483" // darker purple
+            onValueChange={setSelectedMoodIndex}
+          />
+
+          {/* Mood description text */}
+          <Text style={styles.moodDescription}>{currentMood.description}</Text>
         </View>
 
+        {/* Prompt for user note */}
         <Text style={styles.prompt}>What made you feel this way?</Text>
+
+        {/* Multiline text input for mood notes */}
         <TextInput
           placeholder="Share your thoughts..."
+          placeholderTextColor="#bbb"
           style={styles.input}
           multiline
           numberOfLines={4}
@@ -122,7 +145,8 @@ const MoodInputScreen = ({ navigation }) => {
           textAlignVertical="top"
         />
 
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSubmit}>
+        {/* Save mood button */}
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSubmit} activeOpacity={0.85}>
           <Text style={styles.saveBtnText}>Save Mood</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -130,88 +154,92 @@ const MoodInputScreen = ({ navigation }) => {
   );
 };
 
+// Styles for the screen components
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+    backgroundColor: '#E6E0F8', // pastel lavender blue background - relaxing
+  },
   container: {
     padding: 24,
     flexGrow: 1,
     justifyContent: 'center',
   },
   heading: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 30,
-    color: '#10375c',
+    marginBottom: 40,
+    color: '#4B0082', // indigo deep purple
+    textShadowColor: 'rgba(155, 89, 182, 0.4)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 6,
   },
-  moodContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 30,
-  },
-  moodWrapper: {
+  sliderContainer: {
+    width: '100%',
     alignItems: 'center',
-    width: 60,
-  },
-  moodButton: {
-    padding: 15,
+    marginBottom: 40,
+    backgroundColor: '#DCC6E0', // soft lilac card background
     borderRadius: 30,
-    backgroundColor: '#d0e6ff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    shadowColor: '#7D3C98',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 10,
   },
-  selected: {
-    backgroundColor: '#4CAF50',
-    shadowColor: '#4caf5080',
-    shadowOpacity: 0.7,
-    shadowRadius: 10,
-  },
-  moodText: {
-    fontSize: 32,
+  emoji: {
+    fontSize: 70,
+    marginBottom: 12,
+    textShadowColor: '#6C3483',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 10,
   },
   moodDescription: {
-    marginTop: 6,
-    fontSize: 12,
+    fontSize: 16,
     color: '#4a4a4a',
     fontStyle: 'italic',
+    marginTop: 12,
     textAlign: 'center',
+    width: '90%',
   },
   prompt: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: '#1a1a1a',
+    fontSize: 20,
+    marginBottom: 12,
+    color: '#301934',
     fontWeight: '600',
     paddingLeft: 4,
   },
   input: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 25,
+    backgroundColor: '#F7F1FF', // very light purple
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 35,
     fontSize: 16,
-    shadowColor: '#00000030',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    elevation: 3,
+    color: '#301934',
+    shadowColor: '#A569BD',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   saveBtn: {
-    backgroundColor: '#1a73e8',
-    paddingVertical: 16,
-    borderRadius: 14,
-    shadowColor: '#1a73e880',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 7,
-    elevation: 6,
+    backgroundColor: '#6C3483', // deep purple button
+    paddingVertical: 18,
+    borderRadius: 25,
+    shadowColor: '#512E5F',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   saveBtnText: {
     color: '#fff',
     fontWeight: '700',
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 20,
+    letterSpacing: 1,
   },
 });
 
