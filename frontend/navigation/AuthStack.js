@@ -12,6 +12,8 @@ import TrackMoodScreen from '../screens/TrackMoodScreen';
 import TalkToMindMateScreen from '../screens/TalkToMindMateScreen';
 import MoodHistoryScreen from '../screens/MoodHistoryScreen';
 import VersePopupScreen from '../screens/VersePopupScreen';
+import MoodAnalyticsScreen from '../screens/MoodAnalyticsScreen';
+
 
 
 
@@ -61,6 +63,10 @@ const AuthStack = () => {
         component={LoginScreen}
         options={{ headerShown: false }} // Hide header on Login
       />
+
+      <Stack.Screen name="MoodAnalytics" component={MoodAnalyticsScreen}   options={{ headerShown: false }}  // hide default header
+ />
+
       <Stack.Screen 
         name="OtpVerification" 
         component={OtpVerificationScreen}

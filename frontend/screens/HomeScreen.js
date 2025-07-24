@@ -19,7 +19,6 @@ const HomeScreen = () => {
   const { userInfo, userToken } = useContext(AuthContext);
   const navigation = useNavigation();
 
-  // Mood stats state
   const [loadingStats, setLoadingStats] = useState(true);
   const [stats, setStats] = useState({
     totalLogged: 0,
@@ -27,7 +26,6 @@ const HomeScreen = () => {
     encouragement: '',
   });
 
-  // Fetch mood history last 7 days for insights
   useEffect(() => {
     const fetchMoodStats = async () => {
       if (!userToken) {
@@ -49,14 +47,12 @@ const HomeScreen = () => {
 
         const totalLogged = moodsLast7Days.length;
 
-        // Count moods frequency
         const freqMap = {};
         moodsLast7Days.forEach(item => {
           const mood = item.mood?.toLowerCase();
           if (mood) freqMap[mood] = (freqMap[mood] || 0) + 1;
         });
 
-        // Find most common mood
         let mostCommonMood = null;
         let maxCount = 0;
         for (const [mood, count] of Object.entries(freqMap)) {
@@ -66,13 +62,12 @@ const HomeScreen = () => {
           }
         }
 
-        // Prepare encouragement based on most common mood
         let encouragement = '';
         if (!mostCommonMood) {
           encouragement = 'Start logging your moods to get personalized insights!';
         } else if (mostCommonMood === 'happy' || mostCommonMood === 'excited') {
           encouragement = 'Keep riding this positive wave! 🌟';
-        } else if (mostCommonMood === 'sad' || mostCommonMood === 'anxious' || mostCommonMood === 'angry') {
+        } else if (['sad', 'anxious', 'angry'].includes(mostCommonMood)) {
           encouragement = 'Remember, it’s okay to have tough days. You’re doing great by tracking your feelings!';
         } else {
           encouragement = 'Keep checking in with yourself daily.';
@@ -101,27 +96,38 @@ const HomeScreen = () => {
       <Text style={styles.greeting}>Welcome back, {userInfo?.name || "Friend"}!</Text>
       <Text style={styles.tagline}>Your mind matters. Let’s take care of it today.</Text>
 
-      {/* Mood Insights Card */}
-      <View style={styles.insightsCard}>
+          {/* ✅ Mood Insights Card with View More */}
+      <TouchableOpacity
+        style={styles.insightsCard}
+        onPress={() => navigation.navigate('MoodAnalytics')}
+      >
         {loadingStats ? (
           <ActivityIndicator size="small" color="#6a1b9a" />
         ) : (
           <>
             <Text style={styles.insightsTitle}>Mood Insights (Last 7 days)</Text>
             <Text style={styles.insightsText}>
-              Total moods logged: <Text style={styles.insightsHighlight}>{stats.totalLogged}</Text>
+              Total moods logged:{' '}
+              <Text style={styles.insightsHighlight}>{stats.totalLogged}</Text>
             </Text>
             {stats.mostCommonMood ? (
               <Text style={styles.insightsText}>
-                Most common mood: <Text style={styles.insightsHighlight}>
-                  {moodConfig[stats.mostCommonMood]?.emoji} {moodConfig[stats.mostCommonMood]?.label || stats.mostCommonMood}
+                Most common mood:{' '}
+                <Text style={styles.insightsHighlight}>
+                  {moodConfig[stats.mostCommonMood]?.emoji}{' '}
+                  {moodConfig[stats.mostCommonMood]?.label || stats.mostCommonMood}
                 </Text>
               </Text>
             ) : null}
-            <Text style={[styles.insightsText, styles.encouragement]}>{stats.encouragement}</Text>
+            <Text style={[styles.insightsText, styles.encouragement]}>
+              {stats.encouragement}
+            </Text>
+
+            {/* ➕ View More hint */}
+            <Text style={styles.viewMore}>View Mood Chart →</Text>
           </>
         )}
-      </View>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.button}
@@ -131,13 +137,12 @@ const HomeScreen = () => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.buttonSecondary}
-        onPress={() => {
-          // Future: navigate to AI chat screen
-        }}
-      >
-        <Text style={styles.buttonText}>🧠 Talk to MindMate</Text>
-      </TouchableOpacity>
+  style={styles.buttonSecondary}
+  onPress={() => navigation.navigate('SupportScreen')}  // ✅ Navigates to chatbot
+>
+  <Text style={styles.buttonText}>🧠 Talk to MindMate</Text>
+</TouchableOpacity>
+
 
       <TouchableOpacity
         style={styles.buttonHistory}
@@ -145,7 +150,6 @@ const HomeScreen = () => {
       >
         <Text style={styles.buttonText}>📅 View Mood History</Text>
       </TouchableOpacity>
-
     </ScrollView>
   );
 };
@@ -176,7 +180,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   insightsCard: {
-    backgroundColor: '#e6d4f3', // Soft lavender for calm vibes
+    backgroundColor: '#e6d4f3',
     borderRadius: 14,
     padding: 20,
     width: '85%',
@@ -219,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonSecondary: {
-    backgroundColor: '#7986cb',
+    backgroundColor: '#02a796ff',
     padding: 14,
     borderRadius: 10,
     marginTop: 10,
@@ -233,6 +237,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
     width: '80%',
     alignItems: 'center',
+  },
+
+  viewMore: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#4b0082',
+    textAlign: 'right',
+    fontWeight: '600',
+    right:95
   },
   buttonText: {
     color: '#fff',
