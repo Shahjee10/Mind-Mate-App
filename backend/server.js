@@ -7,7 +7,8 @@ import auth from './routes/auth.js';  // import your auth routes
 import { addMood, getUserMoods } from './controllers/moodController.js';
 import verifyToken from './middleware/verifyToken.js'; // ✅ CORRECT
 import aiRoutes from './routes/ai.js';
-
+// --- NEW: import user routes for avatar/profile management ---
+import userRoutes from './routes/User.js';
 
 dotenv.config();
 
@@ -41,6 +42,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// --- NEW: Serve static files from uploads folder so avatars can be accessed ---
+app.use('/uploads', express.static('uploads'));
+
 // Test route
 app.get('/', (req, res) => {
   res.send('MindMate API is working!');
@@ -49,8 +53,10 @@ app.get('/', (req, res) => {
 // Use auth routes
 app.use('/api/auth', auth);
 
-app.use('/api/ai', aiRoutes);
+// --- NEW: Use user profile routes (including avatar upload) ---
+app.use('/api/users', userRoutes);
 
+app.use('/api/ai', aiRoutes);
 
 const router = express.Router();
 
@@ -75,5 +81,3 @@ mongoose.connect(process.env.MONGO_URI)
     console.error('❌ MongoDB connection error:', err);
     process.exit(1);
   });
-
-  

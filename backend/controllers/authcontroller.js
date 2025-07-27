@@ -74,7 +74,8 @@ export const githubLogin = async (req, res) => {
 
     res.json({
       token: jwtToken,
-      user: { email: user.email, name: user.name, avatar: user.avatar },
+      user: { email: user.email, name: user.name, avatar: user.avatar,     provider: 'github' // ✅ ADD THIS LINE
+ },
     });
   } catch (error) {
     console.error('GitHub OAuth Error:', error.response?.data || error.message);
@@ -270,9 +271,53 @@ export const login = async (req, res) => {
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({ token, user: { email: user.email, name: user.name } });
+    res.json({
+      token,
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar, // ✅ Now included
+        provider: 'manual'
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error during login' });
   }
 };
+
+export const updatePassword = async (req, res) => {
+  try {
+    console.log('Update password called');
+    console.log('req.user:', req.user);
+    const userId = req.user.userId;
+    console.log('UserId from token:', userId);
+
+    const { currentPassword, newPassword } = req.body;
+    console.log('Received passwords:', currentPassword ? '***' : null, newPassword ? '***' : null);
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new password are required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (user.provider !== 'manual') {
+      return res.status(403).json({ message: 'Password update not allowed for OAuth users' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Current password is incorrect' });
+
+    user.password = await bcrypt.hash(newPassword, 12);
+    await user.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Password update error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+

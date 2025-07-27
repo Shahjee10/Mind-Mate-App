@@ -6,7 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 const { width } = Dimensions.get('window');
 
 const quranicVersesByMood = {
-  happy: "Indeed, with hardship [will be] ease. — Surah Ash-Sharh [94:6]",
+  happy: "Say, ‘In the bounty of Allah and in His mercy – in that let them rejoice; it is better than what they accumulate.’ — Surah Yunus [10:58]",
   sad: "So verily, with every difficulty, there is relief. — Surah Ash-Sharh [94:5-6]",
   angry: "And do not let the hatred of a people prevent you from being just. — Surah Al-Ma'idah [5:8]",
   anxious: "Say, 'Never will we be struck except by what Allah has decreed for us.' — Surah At-Tawbah [9:51]",

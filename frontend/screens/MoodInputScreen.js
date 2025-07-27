@@ -1,23 +1,29 @@
-import React, { useState, useContext, useRef, useEffect } from 'react';
+import React, { useState, useContext, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  ScrollView,
+  SafeAreaView,
   Animated,
   Easing,
-  KeyboardAvoidingView,
   Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Dimensions,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import FunkyBackButton from '../components/FunkyBackButton';
 
-// Array of moods with emoji, value, and description for slider
+const { width, height } = Dimensions.get('window');
+const isSmallScreen = width < 360;
+
 const moods = [
   { label: '😊', value: 'happy', description: 'Feeling joyful and light!' },
   { label: '😔', value: 'sad', description: 'A bit down, that’s okay.' },
@@ -27,23 +33,16 @@ const moods = [
 ];
 
 const MoodInputScreen = () => {
-  // State for currently selected mood index in the slider (default neutral)
   const [selectedMoodIndex, setSelectedMoodIndex] = useState(4);
-  // State for user’s note about their mood
   const [note, setNote] = useState('');
-  // Get auth token from context to authorize API requests
   const { userToken } = useContext(AuthContext);
   const navigation = useNavigation();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Hide the default top navbar for a cleaner screen
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  // Animated scale for emoji when mood changes
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  // Trigger emoji scale animation when selected mood changes
   useEffect(() => {
     Animated.sequence([
       Animated.timing(scaleAnim, {
@@ -61,7 +60,6 @@ const MoodInputScreen = () => {
     ]).start();
   }, [selectedMoodIndex]);
 
-  // Function to submit mood and note to backend
   const handleSubmit = async () => {
     const selectedMood = moods[selectedMoodIndex].value;
     if (!selectedMood) return alert('Please select a mood.');
@@ -69,108 +67,128 @@ const MoodInputScreen = () => {
     try {
       await axios.post(
         'http://192.168.100.21:5000/api/moods/add',
-        {
-          mood: selectedMood,
-          note,
-        },
-        {
-          headers: { Authorization: `Bearer ${userToken}` },
-        }
+        { mood: selectedMood, note },
+        { headers: { Authorization: `Bearer ${userToken}` } }
       );
-
-     alert('Mood saved successfully!');
-setNote('');
-// Navigate to VersePopupScreen and pass the mood
-navigation.navigate('VersePopupScreen', { mood: selectedMood });
-
+      alert('Mood saved successfully!');
+      setNote('');
+      navigation.navigate('VersePopupScreen', { mood: selectedMood });
     } catch (err) {
       console.error(err);
       alert('Error saving mood: ' + (err.response?.data?.message || err.message));
     }
   };
 
-  // Get current mood object from moods array for display
+  const handleBackPress = useCallback(() => {
+    console.log('Back button pressed, navigating back. Navigation state:', navigation.getState());
+    try {
+      navigation.goBack();
+    } catch (error) {
+      console.error('Navigation goBack failed:', error);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'HomeScreen' }],
+        })
+      );
+    }
+  }, [navigation]);
+
   const currentMood = moods[selectedMoodIndex];
 
   return (
-    // Adjusts keyboard behavior, especially on iOS
-    <KeyboardAvoidingView
-      style={styles.keyboardAvoid}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        {/* Custom funky back arrow button */}
-        <FunkyBackButton onPress={() => navigation.goBack()} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.backButtonContainer}>
+  <FunkyBackButton onPress={handleBackPress} />
+</View>
 
-        {/* Screen heading */}
-        <Text style={styles.heading}>How are you feeling today?</Text>
-
-        {/* Slider container with animated emoji and description */}
-        <View style={styles.sliderContainer}>
-          <Animated.Text
-            style={[styles.emoji, { transform: [{ scale: scaleAnim }] }]}
-          >
-            {currentMood.label}
-          </Animated.Text>
-
-          {/* Mood selection slider */}
-          <Slider
-            style={{ width: '100%', height: 40 }}
-            minimumValue={0}
-            maximumValue={moods.length - 1}
-            step={1}
-            value={selectedMoodIndex}
-            minimumTrackTintColor="#8e44ad" // deep purple
-            maximumTrackTintColor="#c39bd3" // soft lavender
-            thumbTintColor="#6c3483" // darker purple
-            onValueChange={setSelectedMoodIndex}
-          />
-
-          {/* Mood description text */}
-          <Text style={styles.moodDescription}>{currentMood.description}</Text>
-        </View>
-
-        {/* Prompt for user note */}
-        <Text style={styles.prompt}>What made you feel this way?</Text>
-
-        {/* Multiline text input for mood notes */}
-        <TextInput
-          placeholder="Share your thoughts..."
-          placeholderTextColor="#bbb"
-          style={styles.input}
-          multiline
-          numberOfLines={4}
-          value={note}
-          onChangeText={setNote}
-          textAlignVertical="top"
-        />
-
-        {/* Save mood button */}
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSubmit} activeOpacity={0.85}>
-          <Text style={styles.saveBtnText}>Save Mood</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.keyboardView}
+        >
+          <View style={styles.content}>
+            <Text style={styles.heading}>How are you feeling today?</Text>
+            <View style={styles.sliderContainer}>
+              <Animated.Text style={[styles.emoji, { transform: [{ scale: scaleAnim }] }]}>
+                {currentMood.label}
+              </Animated.Text>
+              <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={moods.length - 1}
+                step={1}
+                value={selectedMoodIndex}
+                minimumTrackTintColor="#8e44ad"
+                maximumTrackTintColor="#c39bd3"
+                thumbTintColor="#6c3483"
+                onValueChange={setSelectedMoodIndex}
+              />
+              <Text style={styles.moodDescription}>{currentMood.description}</Text>
+            </View>
+            <ScrollView
+              contentContainerStyle={styles.scrollBox}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={styles.scrollContainer}
+            >
+              <Text style={styles.prompt}>What made you feel this way?</Text>
+              <TextInput
+                placeholder="Share your thoughts..."
+                placeholderTextColor="#bbb"
+                style={styles.input}
+                multiline
+                numberOfLines={6}
+                value={note}
+                onChangeText={setNote}
+                textAlignVertical="top"
+              />
+              <TouchableOpacity
+                style={styles.saveBtn}
+                onPress={handleSubmit}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.saveBtnText}>Save Mood</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 };
 
-// Styles for the screen components
 const styles = StyleSheet.create({
-  keyboardAvoid: {
-    flex: 1,
-    backgroundColor: '#E6E0F8', // pastel lavender blue background - relaxing
-  },
   container: {
-    padding: 24,
-    flexGrow: 1,
-    justifyContent: 'center',
+    flex: 1,
+    backgroundColor: '#f0f4f8',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  backButtonContainer: {
+    position: 'absolute',
+    top: Platform.select({ ios: 10, android: 15 }),
+    left: 20,
+    zIndex: 999,
+  },
+  backButton: {
+    width: isSmallScreen ? 40 : 48,
+    height: isSmallScreen ? 40 : 48,
+  },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: Platform.select({ ios: 120, android: 110 }),
+    paddingHorizontal: isSmallScreen ? 16 : 24,
+    width: '100%',
   },
   heading: {
-    fontSize: 28,
+    fontSize: isSmallScreen ? 24 : 28,
     fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 40,
-    color: '#4B0082', // indigo deep purple
+    marginBottom: isSmallScreen ? 30 : 40,
+    color: '#4B0082',
     textShadowColor: 'rgba(155, 89, 182, 0.4)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 6,
@@ -178,10 +196,10 @@ const styles = StyleSheet.create({
   sliderContainer: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 40,
-    backgroundColor: '#DCC6E0', // soft lilac card background
+    marginBottom: 20,
+    backgroundColor: '#DCC6E0',
     borderRadius: 30,
-    paddingVertical: 30,
+    paddingVertical: 25,
     paddingHorizontal: 20,
     shadowColor: '#7D3C98',
     shadowOffset: { width: 0, height: 8 },
@@ -196,6 +214,10 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 10,
   },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
   moodDescription: {
     fontSize: 16,
     color: '#4a4a4a',
@@ -203,6 +225,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: 'center',
     width: '90%',
+  },
+  scrollContainer: {
+    flexGrow: 0,
+    maxHeight: height * 0.5,
+    width: '100%',
+  },
+  scrollBox: {
+    paddingBottom: 40,
   },
   prompt: {
     fontSize: 20,
@@ -212,10 +242,10 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   input: {
-    backgroundColor: '#F7F1FF', // very light purple
+    backgroundColor: '#F7F1FF',
     padding: 20,
     borderRadius: 20,
-    marginBottom: 35,
+    marginBottom: 25,
     fontSize: 16,
     color: '#301934',
     shadowColor: '#A569BD',
@@ -223,22 +253,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
+    minHeight: 140,
+    width: '100%',
   },
   saveBtn: {
-    backgroundColor: '#6C3483', // deep purple button
-    paddingVertical: 18,
+    backgroundColor: '#6C3483',
+    paddingVertical: 22,
     borderRadius: 25,
     shadowColor: '#512E5F',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
+    width: '100%',
   },
   saveBtnText: {
     color: '#fff',
     fontWeight: '700',
     textAlign: 'center',
-    fontSize: 20,
+    fontSize: 22,
     letterSpacing: 1,
   },
 });

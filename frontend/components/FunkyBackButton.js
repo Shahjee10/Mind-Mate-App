@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     left: 20,
-    backgroundColor: '#6C3483', // Deep purple base
+    backgroundColor: '#171718ff', // Deep purple base
     borderRadius: 35,
     width: 50,
     height: 50,

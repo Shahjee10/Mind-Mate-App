@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Activ
 import LottieView from 'lottie-react-native';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+// import { useLayoutEffect } from 'react'; // No longer needed since we removed headerShown false
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 
 const { width } = Dimensions.get('window');
@@ -18,6 +20,16 @@ const moodConfig = {
 const HomeScreen = () => {
   const { userInfo, userToken } = useContext(AuthContext);
   const navigation = useNavigation();
+
+  /*
+  // COMMENTED OUT: Hiding the header removes the default burger menu button.
+  // We are adding a custom burger menu button manually inside the screen.
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
+  */
 
   const [loadingStats, setLoadingStats] = useState(true);
   const [stats, setStats] = useState({
@@ -85,72 +97,82 @@ const HomeScreen = () => {
   }, [userToken]);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <LottieView
-        source={require('../assets/animation/MeditatingBrain.json')}
-        autoPlay
-        loop
-        style={styles.animation}
-      />
-
-      <Text style={styles.greeting}>Welcome back, {userInfo?.name || "Friend"}!</Text>
-      <Text style={styles.tagline}>Your mind matters. Let’s take care of it today.</Text>
-
-          {/* ✅ Mood Insights Card with View More */}
+    <View style={{ flex: 1 }}>
+      {/* ======= Custom Burger Menu Button at top-left ======= */}
       <TouchableOpacity
-        style={styles.insightsCard}
-        onPress={() => navigation.navigate('MoodAnalytics')}
+        onPress={() => navigation.openDrawer()}
+        style={styles.burgerIcon}
+        accessibilityLabel="Open drawer menu"
       >
-        {loadingStats ? (
-          <ActivityIndicator size="small" color="#6a1b9a" />
-        ) : (
-          <>
-            <Text style={styles.insightsTitle}>Mood Insights (Last 7 days)</Text>
-            <Text style={styles.insightsText}>
-              Total moods logged:{' '}
-              <Text style={styles.insightsHighlight}>{stats.totalLogged}</Text>
-            </Text>
-            {stats.mostCommonMood ? (
+        <Ionicons name="menu" size={28} color="#000" />
+      </TouchableOpacity>
+
+      <ScrollView contentContainerStyle={styles.container}>
+        <LottieView
+          source={require('../assets/animation/MeditatingBrain.json')}
+          autoPlay
+          loop
+          style={styles.animation}
+        />
+
+        <Text style={styles.greeting}>Welcome back, {userInfo?.name || "Friend"}!</Text>
+        <Text style={styles.tagline}>Your mind matters. Let’s take care of it today.</Text>
+
+        {/* ✅ Mood Insights Card with View More */}
+        <TouchableOpacity
+          style={styles.insightsCard}
+          onPress={() => navigation.navigate('MoodAnalytics')}
+        >
+          {loadingStats ? (
+            <ActivityIndicator size="small" color="#6a1b9a" />
+          ) : (
+            <>
+              <Text style={styles.insightsTitle}>Mood Insights (Last 7 days)</Text>
               <Text style={styles.insightsText}>
-                Most common mood:{' '}
-                <Text style={styles.insightsHighlight}>
-                  {moodConfig[stats.mostCommonMood]?.emoji}{' '}
-                  {moodConfig[stats.mostCommonMood]?.label || stats.mostCommonMood}
-                </Text>
+                Total moods logged:{' '}
+                <Text style={styles.insightsHighlight}>{stats.totalLogged}</Text>
               </Text>
-            ) : null}
-            <Text style={[styles.insightsText, styles.encouragement]}>
-              {stats.encouragement}
-            </Text>
+              {stats.mostCommonMood ? (
+                <Text style={styles.insightsText}>
+                  Most common mood:{' '}
+                  <Text style={styles.insightsHighlight}>
+                    {moodConfig[stats.mostCommonMood]?.emoji}{' '}
+                    {moodConfig[stats.mostCommonMood]?.label || stats.mostCommonMood}
+                  </Text>
+                </Text>
+              ) : null}
+              <Text style={[styles.insightsText, styles.encouragement]}>
+                {stats.encouragement}
+              </Text>
 
-            {/* ➕ View More hint */}
-            <Text style={styles.viewMore}>View Mood Chart →</Text>
-          </>
-        )}
-      </TouchableOpacity>
+              {/* ➕ View More hint */}
+              <Text style={styles.viewMore}>View Mood Chart →</Text>
+            </>
+          )}
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('MoodInputScreen')}
-      >
-        <Text style={styles.buttonText}>➕ Log Mood</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('MoodInputScreen')}
+        >
+          <Text style={styles.buttonText}>➕ Log Mood</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-  style={styles.buttonSecondary}
-  onPress={() => navigation.navigate('SupportScreen')}  // ✅ Navigates to chatbot
->
-  <Text style={styles.buttonText}>🧠 Talk to MindMate</Text>
-</TouchableOpacity>
+        <TouchableOpacity
+          style={styles.buttonSecondary}
+          onPress={() => navigation.navigate('SupportScreen')}  // ✅ Navigates to chatbot
+        >
+          <Text style={styles.buttonText}>🧠 Talk to MindMate</Text>
+        </TouchableOpacity>
 
-
-      <TouchableOpacity
-        style={styles.buttonHistory}
-        onPress={() => navigation.navigate('MoodHistoryScreen')}
-      >
-        <Text style={styles.buttonText}>📅 View Mood History</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity
+          style={styles.buttonHistory}
+          onPress={() => navigation.navigate('MoodHistoryScreen')}
+        >
+          <Text style={styles.buttonText}>📅 View Mood History</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -198,6 +220,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
+  burgerIcon: {
+    position: 'absolute',
+    top: 50, // adjust to avoid status bar overlap
+    left: 15,
+    zIndex: 1000,
+    backgroundColor:'#7dbeffff', // optional white background for visibility
+    padding: 5,
+    borderRadius: 5,
+    elevation: 5, // shadow on Android
+  },
   insightsText: {
     fontSize: 15,
     color: '#4a4a4a',
@@ -238,14 +270,13 @@ const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
   },
-
   viewMore: {
     marginTop: 10,
     fontSize: 14,
     color: '#4b0082',
     textAlign: 'right',
     fontWeight: '600',
-    right:95
+    right: 95,
   },
   buttonText: {
     color: '#fff',

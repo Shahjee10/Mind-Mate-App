@@ -14,339 +14,460 @@ import {
 } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import FunkyBackButton from '../components/FunkyBackButton';
 
 const { width, height } = Dimensions.get('window');
+const isSmallScreen = width < 360;
+
+// Mood-to-emoji mapping for dynamic header
+const moodEmojis = {
+  happy: '😊',
+  sad: '😔',
+  angry: '😠',
+  anxious: '😰',
+  neutral: '😐',
+};
+
+// Separate component for each message to handle animation
+const MessageItem = ({ item }) => {
+  const isUser = item.role === 'user';
+  const messageAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(messageAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.messageContainer,
+        isUser ? styles.userMessageContainer : styles.assistantMessageContainer,
+        {
+          opacity: messageAnim,
+          transform: [
+            { translateY: messageAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) },
+          ],
+        },
+      ]}
+    >
+      <View style={styles.avatar}>
+        <Text style={styles.avatarText}>{isUser ? '🙂' : '🤖'}</Text>
+      </View>
+      <LinearGradient
+        colors={isUser ? ['#8e44ad', '#6a0dad'] : ['#ffffff', '#e6e0fa']}
+        style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}
+      >
+        <Text style={isUser ? styles.userText : styles.assistantText}>{item.content}</Text>
+      </LinearGradient>
+    </Animated.View>
+  );
+};
 
 const SupportScreen = ({ route }) => {
   const { mood } = route.params || {};
   const { userToken } = useContext(AuthContext);
+  const navigation = useNavigation();
   const [messages, setMessages] = useState([
     {
       id: '1',
       role: 'assistant',
-      content: `Hi! I see you are feeling ${mood || 'this way'}. How can I assist you today?`,
+      content: `Hi! I see you're feeling ${mood || 'this way'}. How can I assist you today?`,
     },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef();
 
-  // Auto scroll on new message
+  const headerFadeAnim = useRef(new Animated.Value(0)).current;
+  const sendBtnScale = useRef(new Animated.Value(1)).current;
+  const particleAnims = Array(3)
+    .fill()
+    .map(() => useRef(new Animated.Value(0)).current);
+
   useEffect(() => {
     flatListRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
 
-  // Animated floating circles for vibe
-  const floatAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, { toValue: 1, duration: 7000, useNativeDriver: true }),
-        Animated.timing(floatAnim, { toValue: 0, duration: 7000, useNativeDriver: true }),
-      ]),
-    ).start();
+    Animated.parallel([
+      Animated.timing(headerFadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      ...particleAnims.map((anim, index) =>
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, {
+              toValue: 1,
+              duration: 4000 + index * 1000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim, {
+              toValue: 0,
+              duration: 4000 + index * 1000,
+              useNativeDriver: true,
+            }),
+          ])
+        )
+      ),
+    ]).start();
   }, []);
 
- const sendMessage = async () => {
-  if (!input.trim() || loading) return;
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
 
-  const userMsg = {
-    id: Date.now().toString(),
-    role: 'user',
-    content: input.trim(),
+    const userMsg = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input.trim(),
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://192.168.100.21:5000/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ messages: [...messages, userMsg] }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      const aiReply =
+        data.reply && data.reply.trim() !== ''
+          ? data.reply
+          : 'Sorry, I couldn’t understand that. Could you please rephrase?';
+
+      setMessages(prev => [
+        ...prev,
+        { id: Date.now().toString() + 'a', role: 'assistant', content: aiReply },
+      ]);
+    } catch (error) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now().toString() + 'e',
+          role: 'assistant',
+          content: 'Sorry, something went wrong. Please try again.',
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  setMessages(prev => [...prev, userMsg]);
-  setInput('');
-  setLoading(true);
+  const handleSendPress = () => {
+    Animated.sequence([
+      Animated.timing(sendBtnScale, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sendBtnScale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    sendMessage();
+  };
 
-  try {
-    const response = await fetch('http://192.168.100.21:5000/api/ai/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${userToken}`,
-      },
-      body: JSON.stringify({ messages: [...messages, userMsg] }),
+  const renderParticle = (anim, index) => {
+    const translateY = anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, -height * 0.3],
     });
-
-    if (!response.ok) {
-      throw new Error(`Server responded with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('AI reply from backend:', data.reply);
-
-    const aiReply =
-      data.reply && data.reply.trim() !== ''
-        ? data.reply
-        : 'Sorry, I couldn’t understand that. Could you please rephrase?';
-
-    setMessages(prev => [
-      ...prev,
-      { id: Date.now().toString() + 'a', role: 'assistant', content: aiReply },
-    ]);
-  } catch (error) {
-    console.error('AI chat error:', error.message);
-    setMessages(prev => [
-      ...prev,
-      {
-        id: Date.now().toString() + 'e',
-        role: 'assistant',
-        content: 'Sorry, something went wrong. Please try again.',
-      },
-    ]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  const renderItem = ({ item }) => {
-    const isUser = item.role === 'user';
+    const opacity = anim.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0.2, 0.5, 0.2],
+    });
     return (
-      <View
+      <Animated.View
+        key={index}
         style={[
-          styles.messageContainer,
-          isUser ? styles.userMessageContainer : styles.assistantMessageContainer,
+          styles.particle,
+          {
+            left: index * (width * 0.3) + 50,
+            top: height * (0.2 + index * 0.1),
+            transform: [{ translateY }],
+            opacity,
+          },
         ]}
-      >
-        <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-          <Text style={isUser ? styles.userText : styles.assistantText}>{item.content}</Text>
-        </View>
-      </View>
+      />
     );
   };
 
-  // Animated floating bubbles positions and styles
-  const bubbleTranslateY = floatAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -15],
-  });
-  const bubbleOpacity = floatAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.3, 0.8, 0.3],
-  });
-
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
-    >
-      {/* Animated floating bubbles */}
-      <Animated.View
-        style={[styles.floatingBubble, { left: 40, top: 120, transform: [{ translateY: bubbleTranslateY }], opacity: bubbleOpacity }]}
-      />
-      <Animated.View
-        style={[styles.floatingBubbleSmall, { left: width * 0.75, top: 70, transform: [{ translateY: bubbleTranslateY }], opacity: bubbleOpacity }]}
-      />
-      <Animated.View
-        style={[styles.floatingBubbleSmall, { left: width * 0.3, top: 200, transform: [{ translateY: bubbleTranslateY }], opacity: bubbleOpacity }]}
-      />
+   <SafeAreaView style={styles.safeArea}>
+  <LinearGradient colors={['#4c2882', '#2a1b4d']} style={StyleSheet.absoluteFill} />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>MindMate Helper 🤖</Text>
-        <Text style={styles.headerSubtitle}>
-          {mood ? `You're feeling ${mood}` : 'How can I assist you today?'}
-        </Text>
-      </View>
+  {/* Back button placed absolutely at top-left corner */}
+  <TouchableOpacity
+    onPress={() => navigation.goBack()}
+    activeOpacity={0.7}
+    style={styles.backButtonContainer}
+    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+  >
+    <FunkyBackButton />
+  </TouchableOpacity>
 
-      {/* Chat messages */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.chatContainer}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        showsVerticalScrollIndicator={false}
-      />
+  {particleAnims.map(renderParticle)}
 
-      {/* Loading indicator */}
-      {loading && (
-        <View style={styles.loadingIndicator}>
-          <ActivityIndicator size="small" color="#6a0dad" />
-          <Text style={styles.loadingText}>MindMate is typing...</Text>
-        </View>
-      )}
-
-      {/* Input area */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Type your message..."
-          multiline
-          editable={!loading}
-          placeholderTextColor="#666"
-          returnKeyType="send"
-          onSubmitEditing={sendMessage}
+  <KeyboardAvoidingView
+    style={styles.container}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 30}
+  >
+   {/* Smaller background container only behind header text */}
+        <Animated.View style={[styles.headerContainer, { opacity: headerFadeAnim }]}>
+          <Text style={styles.headerTitle}>
+            MindMate Helper {moodEmojis[mood] || '🤖'}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {mood ? `Let's talk about feeling ${mood}` : 'Your AI companion is here!'}
+          </Text>
+        </Animated.View>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => <MessageItem item={item} />}
+          contentContainerStyle={styles.chatContainer}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          style={styles.chatList}
         />
-        <TouchableOpacity
-          onPress={sendMessage}
-          style={[styles.sendBtn, (loading || !input.trim()) && styles.sendBtnDisabled]}
-          disabled={loading || !input.trim()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="send" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+
+        {loading && (
+          <LinearGradient colors={['#9c27b0', '#6a0dad']} style={styles.loadingIndicator}>
+            <ActivityIndicator size="small" color="#fff" />
+            <Text style={styles.loadingText}>MindMate is thinking...</Text>
+          </LinearGradient>
+        )}
+
+        <LinearGradient colors={['#9c27b0', '#6a0dad']} style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Type your message..."
+            multiline
+            editable={!loading}
+            placeholderTextColor="#bbb"
+            returnKeyType="send"
+            onSubmitEditing={handleSendPress}
+          />
+          <TouchableOpacity
+            onPress={handleSendPress}
+            style={[styles.sendBtn, (loading || !input.trim()) && styles.sendBtnDisabled]}
+            disabled={loading || !input.trim()}
+            activeOpacity={0.7}
+          >
+            <Animated.View style={{ transform: [{ scale: sendBtnScale }] }}>
+              <Ionicons name="send" size={isSmallScreen ? 22 : 24} color="#fff" />
+            </Animated.View>
+          </TouchableOpacity>
+        </LinearGradient>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: 'linear-gradient(135deg, #b29ddb, #7a56c9)', // fallback color
-    backgroundColor: '#7a56c9', // solid purple background fallback for gradient in RN
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
-  floatingBubble: {
+  particle: {
     position: 'absolute',
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#b994ff88',
-    shadowColor: '#9b59b6',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  floatingBubbleSmall: {
-    position: 'absolute',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#d8b5ff99',
-    shadowColor: '#8e44ad',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    width: isSmallScreen ? 8 : 10,
+    height: isSmallScreen ? 8 : 10,
+    borderRadius: 5,
+    backgroundColor: '#ffffff33',
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
-    backgroundColor: 'transparent',
+  paddingHorizontal: 10,
+  paddingTop: isSmallScreen ? 10 : 60,
+  paddingBottom: 20,
+  alignItems: 'center',
+  // Remove background color / gradient here (or keep if you want subtle background)
+},
+
+ backButtonContainer: {
+  position: 'absolute',
+  top: 10,
+  left: 0,
+  padding: 12,  // or less if you want it tighter
+  zIndex: 1000,
+},
+
+  headerContent: {
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: isSmallScreen ? 24 : 28,
     fontWeight: '900',
     color: '#fff',
     letterSpacing: 1,
-    marginBottom: 6,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: isSmallScreen ? 14 : 16,
     fontWeight: '600',
-    color: '#d6c5ff',
+    color: '#e0c7ff',
     fontStyle: 'italic',
+    marginTop: 4,
+  },
+  chatList: {
+    flex: 1,
   },
   chatContainer: {
     paddingHorizontal: 16,
+    paddingVertical: 10,
     paddingBottom: 100,
   },
   messageContainer: {
     flexDirection: 'row',
     marginVertical: 6,
-    maxWidth: '75%',
+    maxWidth: '85%',
+    alignItems: 'center',
   },
   userMessageContainer: {
     alignSelf: 'flex-end',
-    justifyContent: 'flex-end',
+    flexDirection: 'row-reverse',
   },
   assistantMessageContainer: {
     alignSelf: 'flex-start',
-    justifyContent: 'flex-start',
+  },
+  avatar: {
+    width: isSmallScreen ? 30 : 36,
+    height: isSmallScreen ? 30 : 36,
+    borderRadius: 18,
+    backgroundColor: '#ffffff33',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  avatarText: {
+    fontSize: isSmallScreen ? 18 : 20,
   },
   messageBubble: {
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    borderRadius: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
   userBubble: {
-    backgroundColor: '#9c27b0',
-    borderBottomRightRadius: 6,
+    borderBottomRightRadius: 4,
   },
   assistantBubble: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderBottomLeftRadius: 6,
+    borderBottomLeftRadius: 4,
   },
   userText: {
     color: '#fff',
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: isSmallScreen ? 15 : 16,
+    fontWeight: '600',
   },
   assistantText: {
-    color: '#5e2a87',
-    fontSize: 17,
-    fontWeight: '600',
+    color: '#4a148c',
+    fontSize: isSmallScreen ? 15 : 16,
+    fontWeight: '500',
   },
   loadingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.15)',
     borderTopWidth: 1,
     borderColor: '#9c27b0',
   },
   loadingText: {
-    color: '#d6c5ff',
+    color: '#fff',
     marginLeft: 12,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: isSmallScreen ? 13 : 14,
     fontStyle: 'italic',
   },
   inputContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderTopWidth: 1,
     borderColor: '#9c27b0',
   },
   input: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffffee',
     borderRadius: 25,
     paddingHorizontal: 20,
     paddingVertical: Platform.OS === 'ios' ? 14 : 10,
-    fontSize: 16,
+    fontSize: isSmallScreen ? 15 : 16,
     color: '#4a148c',
-    maxHeight: 120,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    maxHeight: 100,
+    shadowColor: '#9c27b0',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
   sendBtn: {
-    marginLeft: 14,
+    marginLeft: 12,
     backgroundColor: '#9c27b0',
     borderRadius: 25,
-    paddingHorizontal: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
     justifyContent: 'center',
     shadowColor: '#7a1fa2',
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.5,
     shadowRadius: 8,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 4 },
     elevation: 5,
   },
   sendBtnDisabled: {
     backgroundColor: '#d1a5e0',
+    shadowOpacity: 0.3,
+  },
+
+   headerContainer: {
+    backgroundColor: '#6a0dad', // solid purple background behind text
+    alignSelf: 'center',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginTop: isSmallScreen ? 50 : 60,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#2c0657',
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
 });
 
