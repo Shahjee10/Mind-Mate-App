@@ -193,7 +193,7 @@ const SignupScreen = () => {
               fill="#FFFFFF"
             />
           </Svg>
-          <Text style={styles.githubText}>{loading ? 'Connecting...' : 'Continue with GitHub'}</Text>
+          <Text style={styles.githubText}>{loading ? 'Connecting...' : 'Sign up with GitHub'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
