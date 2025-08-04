@@ -1,27 +1,41 @@
 import React, { useContext } from 'react';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
-import HomeScreen from '../screens/HomeScreen';
-import AccountScreen from '../screens/AccountScreen';
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem,
+} from '@react-navigation/drawer';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import HomeScreen from '../screens/HomeScreen';
+import AccountScreen from '../screens/AccountScreen';
+import { useNavigation } from '@react-navigation/native';
 
 const Drawer = createDrawerNavigator();
 
-// Custom Drawer Content component
+// Custom Drawer Content inside this file with logout fix
 function CustomDrawerContent(props) {
   const { logout } = useContext(AuthContext);
+  const navigation = useNavigation(); // To reset navigation stack
 
-  const confirmLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: () => logout() },
-      ],
-      { cancelable: true }
-    );
-  };
+const confirmLogout = () => {
+  Alert.alert(
+    'Logout',
+    'Are you sure you want to logout?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: () => {
+          logout();  // Only clear auth data here
+        },
+      },
+    ],
+    { cancelable: true }
+  );
+};
+
 
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>

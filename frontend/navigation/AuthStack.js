@@ -1,5 +1,5 @@
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import SignupScreen from '../screens/SignupScreen';
 import LoginScreen from '../screens/LoginScreen';
 import OtpVerificationScreen from '../screens/OtpVerificationScreen';
@@ -13,17 +13,16 @@ import TalkToMindMateScreen from '../screens/TalkToMindMateScreen';
 import MoodHistoryScreen from '../screens/MoodHistoryScreen';
 import VersePopupScreen from '../screens/VersePopupScreen';
 import MoodAnalyticsScreen from '../screens/MoodAnalyticsScreen';
+import SplashScreen from '../screens/SplashScreen';
 
 
 
+const Stack = createStackNavigator();
 
-
-const Stack = createNativeStackNavigator();
-
-const AuthStack = () => {
+const AuthStack = ({ initialRouteName }) => {
   return (
-    <Stack.Navigator 
-      initialRouteName="Login" // Set MindMateScreen as the initial screen
+    <Stack.Navigator
+      initialRouteName={initialRouteName}
       screenOptions={{
         headerShown: true,
         headerStyle: {
@@ -36,8 +35,16 @@ const AuthStack = () => {
         contentStyle: {
           backgroundColor: '#f9f9f9',
         },
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,  // <--- Add this line here
+
       }}
     >
+
+      <Stack.Screen
+  name="Splash"
+  component={SplashScreen}
+  options={{ headerShown: false }} // Hide header for Splash
+/>
       <Stack.Screen 
         name="MindMateScreen" 
         component={MindMateScreen}

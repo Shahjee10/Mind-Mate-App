@@ -1,6 +1,6 @@
 // navigation/HomeStack.js
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import HomeScreen from '../screens/HomeScreen';
 import MoodInputScreen from '../screens/MoodInputScreen';
 import MoodHistoryScreen from '../screens/MoodHistoryScreen';
@@ -9,7 +9,7 @@ import MoodAnalyticsScreen from '../screens/MoodAnalyticsScreen';
 import VersePopupScreen from '../screens/VersePopupScreen'; // ✅ import it
 
 
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 
 const HomeStack = () => {
   return (

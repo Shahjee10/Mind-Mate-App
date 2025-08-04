@@ -7,10 +7,10 @@ export const AuthProvider = ({ children }) => {
   const [userToken, setUserToken] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
 
-  // Load token and user info from AsyncStorage on app start
   useEffect(() => {
-    const loadStorageData = async () => {
+    const loadAppData = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
         const user = await AsyncStorage.getItem('userInfo');
@@ -18,17 +18,25 @@ export const AuthProvider = ({ children }) => {
           setUserToken(token);
           setUserInfo(JSON.parse(user));
         }
-      } catch (error) {
-        console.error('Failed to load auth data from storage', error);
+
+        const hasLaunched = await AsyncStorage.getItem('hasLaunched');
+        if (hasLaunched === null) {
+          setIsFirstLaunch(true);
+          await AsyncStorage.setItem('hasLaunched', 'true');
+        } else {
+          setIsFirstLaunch(false);
+        }
+      } catch (e) {
+        console.error('Error loading app data', e);
+        setIsFirstLaunch(false);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadStorageData();
+    loadAppData();
   }, []);
 
-  // Function to save token and user info to state and AsyncStorage
   const login = async (token, user) => {
     setUserToken(token);
     setUserInfo(user);
@@ -36,7 +44,6 @@ export const AuthProvider = ({ children }) => {
     await AsyncStorage.setItem('userInfo', JSON.stringify(user));
   };
 
-  // Function to clear auth data on logout
   const logout = async () => {
     setUserToken(null);
     setUserInfo(null);
@@ -50,10 +57,11 @@ export const AuthProvider = ({ children }) => {
         userToken,
         userInfo,
         isLoading,
+        isFirstLaunch,
         login,
         logout,
-        setUserToken, // optional fallback
-        setUserInfo,  // optional fallback
+        setUserToken,
+        setUserInfo,
       }}
     >
       {children}

@@ -18,7 +18,7 @@ import AccountScreen from './screens/AccountScreen';
 
 const Drawer = createDrawerNavigator();
 
-// Custom Drawer Content to add Logout button with confirmation
+// Custom Drawer Content with Logout button — **NO navigation reset here!**
 function CustomDrawerContent(props) {
   const { logout } = useContext(AuthContext);
 
@@ -28,7 +28,13 @@ function CustomDrawerContent(props) {
       "Are you sure you want to logout?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Logout", style: "destructive", onPress: () => logout() },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: () => {
+            logout(); // Just clear auth, no navigation calls
+          },
+        },
       ],
       { cancelable: true }
     );
@@ -37,52 +43,41 @@ function CustomDrawerContent(props) {
   return (
     <DrawerContentScrollView {...props}>
       <DrawerItemList {...props} />
-      <DrawerItem
-        label="Logout"
-        onPress={confirmLogout}
-      />
+      <DrawerItem label="Logout" onPress={confirmLogout} />
     </DrawerContentScrollView>
   );
 }
 
-// Drawer shown after login with custom styling added here
-const AppDrawer = () => {
-  return (
-    <Drawer.Navigator
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
-      initialRouteName="HomeStack"
-      screenOptions={{
-        headerShown: false,
-        drawerStyle: {
-          width: 250,
-          backgroundColor: '#E6F4F1',
-          borderTopRightRadius: 20,
-          borderBottomRightRadius: 20,
-          shadowColor: '#000',
-          shadowOpacity: 0.1,
-          shadowRadius: 10,
-          elevation: 5,
-        },
-        drawerActiveTintColor: '#00695C',
-        drawerInactiveTintColor: '#004D40',
-        drawerLabelStyle: { fontSize: 16, fontWeight: '600' },
-      }}
-    >
-      <Drawer.Screen
-        name="HomeStack"
-        component={HomeStack}
-        options={{ title: 'Home' }}
-      />
-      <Drawer.Screen name="Account" component={AccountScreen} />
-    </Drawer.Navigator>
-  );
-};
+const AppDrawer = () => (
+  <Drawer.Navigator
+    drawerContent={(props) => <CustomDrawerContent {...props} />}
+    initialRouteName="HomeStack"
+    screenOptions={{
+      headerShown: false,
+      drawerStyle: {
+        width: 250,
+        backgroundColor: '#E6F4F1',
+        borderTopRightRadius: 20,
+        borderBottomRightRadius: 20,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
+      },
+      drawerActiveTintColor: '#00695C',
+      drawerInactiveTintColor: '#004D40',
+      drawerLabelStyle: { fontSize: 16, fontWeight: '600' },
+    }}
+  >
+    <Drawer.Screen name="HomeStack" component={HomeStack} options={{ title: 'Home' }} />
+    <Drawer.Screen name="Account" component={AccountScreen} />
+  </Drawer.Navigator>
+);
 
-// Root navigator decides which stack to show based on auth
 const RootNavigator = () => {
-  const { userToken, isLoading } = useContext(AuthContext);
+  const { userToken, isLoading, isFirstLaunch } = useContext(AuthContext);
 
-  if (isLoading) {
+  if (isLoading || isFirstLaunch === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
@@ -90,7 +85,11 @@ const RootNavigator = () => {
     );
   }
 
-  return userToken ? <AppDrawer /> : <AuthStack />;
+  if (!userToken) {
+  return <AuthStack initialRouteName="Splash" />;
+}
+
+  return <AppDrawer />;
 };
 
 export default function App() {
