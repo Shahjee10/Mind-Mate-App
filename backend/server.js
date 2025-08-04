@@ -1,80 +1,86 @@
+// Importing required packages
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import os from 'os'; // ✅ Static import (fixes your error)
 
-import auth from './routes/auth.js';  // import your auth routes
+// Importing route handlers
+import auth from './routes/auth.js';
 import { addMood, getUserMoods } from './controllers/moodController.js';
-import verifyToken from './middleware/verifyToken.js'; // ✅ CORRECT
+import verifyToken from './middleware/verifyToken.js';
 import aiRoutes from './routes/ai.js';
-// --- NEW: import user routes for avatar/profile management ---
-import userRoutes from './routes/User.js';
+import userRoutes from './routes/User.js'; // for avatar/profile management
 
-dotenv.config();
+dotenv.config(); // Load environment variables from .env
 
-// Debug: Check env variables loaded properly
+// Debug logs to check environment variables are loading correctly
 console.log('Loaded EMAIL_USER:', process.env.EMAIL_USER);
 console.log('Loaded EMAIL_PASS length:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 'No pass');
 
 const app = express();
 
-// CORS configuration for development
+// CORS configuration - make sure it allows requests from your frontend IPs
 const corsOptions = {
   origin: [
     'http://localhost:3000',
     'http://localhost:19006',
-    'http://192.168.1.100:3000',
-    'http://192.168.1.100:19006',
     'http://192.168.100.21:3000',
     'http://192.168.100.21:19006',
-    'exp://192.168.1.100:19000',
-    'exp://192.168.100.21:8081',
-    'https://auth.expo.io',
+    'exp://192.168.100.21:19000',
     'http://localhost:19000',
-    'exp://localhost:19000'
+    'exp://localhost:19000',
+    'https://auth.expo.io'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-// Middleware
+// Middlewares
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use('/uploads', express.static('uploads')); // For serving uploaded profile images
 
-// --- NEW: Serve static files from uploads folder so avatars can be accessed ---
-app.use('/uploads', express.static('uploads'));
-
-// Test route
+// Test API route
 app.get('/', (req, res) => {
   res.send('MindMate API is working!');
 });
 
-// Use auth routes
-app.use('/api/auth', auth);
+// Routes
+app.use('/api/auth', auth);             // Auth routes (signup, login, GitHub OAuth)
+app.use('/api/users', userRoutes);      // User profile/avatar routes
+app.use('/api/ai', aiRoutes);           // AI chat route
 
-// --- NEW: Use user profile routes (including avatar upload) ---
-app.use('/api/users', userRoutes);
-
-app.use('/api/ai', aiRoutes);
-
+// Mood tracking routes
 const router = express.Router();
-
 router.post('/add', verifyToken, addMood);
 router.get('/:userId', verifyToken, getUserMoods);
+app.use('/api/moods', router); // Mount moods under /api/moods
 
-export const moodRoutes = router;
-app.use('/api/moods', moodRoutes);
+// Determine local IP address to display in logs
+function getLocalIPAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const iface of Object.values(interfaces)) {
+    for (const config of iface) {
+      if (config.family === 'IPv4' && !config.internal) {
+        return config.address;
+      }
+    }
+  }
+  return 'localhost';
+}
 
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB and start server
+// Connect to MongoDB and start the server
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
+    const localIP = getLocalIPAddress();
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🌐 Accessible at: http://192.168.100.21:${PORT}`);
+      console.log(`🌐 Accessible at: http://${localIP}:${PORT}`);
     });
   })
   .catch(err => {

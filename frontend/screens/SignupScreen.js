@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { loginWithGithub } from '../utils/githubOAuth';
 import { AuthContext } from '../context/AuthContext';
 import Svg, { Path } from 'react-native-svg';
+import API_BASE_URL from '../apiConfig';
 
 const SignupScreen = () => {
   const [name, setName] = useState('');
@@ -34,7 +35,7 @@ const SignupScreen = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post('http://192.168.100.21:5000/api/auth/signup', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
         name,
         email,
         password,
@@ -62,7 +63,7 @@ const SignupScreen = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post('http://192.168.100.21:5000/api/auth/complete-signup', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/complete-signup`, {
         name,
         email,
         password,
@@ -118,8 +119,8 @@ const SignupScreen = () => {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        <Text style={styles.title}>Join Us</Text>
-        <Text style={styles.subtitle}>Begin your journey to mental wellness</Text>
+        <Text style={styles.title}>Create Your MindMate Account</Text>
+        <Text style={styles.subtitle}>Your wellness journey begins here</Text>
 
         <TextInput
           style={styles.input}
@@ -127,33 +128,24 @@ const SignupScreen = () => {
           value={name}
           onChangeText={setName}
           editable={!otpSent}
-          autoCapitalize="words"
-          returnKeyType="next"
-          blurOnSubmit={false}
         />
 
         <TextInput
           style={styles.input}
           placeholder="Email"
           keyboardType="email-address"
-          autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
           editable={!otpSent}
-          returnKeyType="next"
-          blurOnSubmit={false}
         />
 
         <TextInput
           style={styles.input}
           placeholder="Password"
           secureTextEntry
-          autoCapitalize="none"
           value={password}
           onChangeText={setPassword}
           editable={!otpSent}
-          returnKeyType="done"
-          blurOnSubmit={true}
         />
 
         {otpSent && (
@@ -164,8 +156,6 @@ const SignupScreen = () => {
             value={otp}
             onChangeText={setOtp}
             maxLength={6}
-            returnKeyType="done"
-            blurOnSubmit={true}
           />
         )}
 
@@ -186,20 +176,11 @@ const SignupScreen = () => {
             >
               <Text style={styles.buttonText}>{loading ? 'Creating Account...' : 'Complete Signup'}</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.resendButton} 
-              onPress={handleResendOtp}
-              disabled={loading}
-            >
+            <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading}>
               <Text style={styles.resendText}>Resend OTP</Text>
             </TouchableOpacity>
           </View>
         )}
-
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.link}>Already have an account? Log in</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity 
           onPress={handleGithubSignup} 
@@ -212,9 +193,11 @@ const SignupScreen = () => {
               fill="#FFFFFF"
             />
           </Svg>
-          <Text style={styles.githubText}>
-            {loading ? 'Connecting...' : 'Continue with GitHub'}
-          </Text>
+          <Text style={styles.githubText}>{loading ? 'Connecting...' : 'Continue with GitHub'}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.link}>Already have an account? Log in</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -224,109 +207,86 @@ const SignupScreen = () => {
 export default SignupScreen;
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#E0F7FA', // Light cyan background for better contrast
+  container: {
+    flex: 1,
+    backgroundColor: '#F1F3F6',
   },
-  scrollContainer: { 
-    flexGrow: 1, 
-    justifyContent: 'center', 
-    padding: 15,
-    paddingBottom: 30,
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 24,
+    justifyContent: 'center',
   },
-  title: { 
-    fontSize: 28, 
-    fontWeight: 'bold', 
-    marginBottom: 8, 
-    textAlign: 'center', 
-    color: '#00695C', // Dark teal for visibility
-    fontFamily: 'cursive',
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#4C2882',
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  subtitle: { 
-    fontSize: 14, 
-    color: '#004D40', // Darker teal for subtitle
-    textAlign: 'center', 
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#666',
     marginBottom: 25,
-    fontStyle: 'italic',
-    fontFamily: 'cursive',
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#B0BEC5', // Light blue-gray border
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
     marginBottom: 12,
-    fontSize: 14,
-    color: '#212121', // Darker text for readability
+    borderColor: '#D0D0D0',
+    borderWidth: 1,
   },
   button: {
-    backgroundColor: '#26A69A', // Teal button
-    paddingVertical: 8,
-    paddingHorizontal: 20, // Reduced horizontal padding
-    borderRadius: 10,
+    backgroundColor: '#4C2882',
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    marginBottom: 6, // Reduced margin to bring buttons closer
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: { 
-    color: '#FFFFFF', // White text for contrast
-    fontWeight: 'bold', 
-    fontSize: 14 
+  buttonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
   resendButton: {
-    backgroundColor: '#42A5F5', // Bright blue for resend
-    paddingVertical: 6,
-    paddingHorizontal: 20, // Reduced horizontal padding
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: '#6A1B9A',
+    marginBottom: 6, // Reduced margin to bring buttons closer
   },
-  resendText: { 
-    color: '#FFFFFF', // White text for contrast
-    fontWeight: 'bold', 
-    fontSize: 14 
+  resendText: {
+    color: '#FFF',
+    fontWeight: '500',
+    fontSize: 15,
   },
-  link: { 
-    color: '#0288D1', // Bright blue for links
-    textAlign: 'center', 
-    marginTop: 8, 
-    fontSize: 14,
-    fontFamily: 'cursive',
+  link: {
+    color: '#4C2882',
+    textAlign: 'center',
+    marginTop: 16,
+    textDecorationLine: 'underline',
   },
   githubButton: {
     flexDirection: 'row',
-    backgroundColor: '#24292E', // GitHub dark gray
-    paddingVertical: 8,
-    paddingHorizontal: 20, // Reduced horizontal padding
-    borderRadius: 10,
+    backgroundColor: '#24292E',
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    marginTop: 6, // Reduced margin to bring buttons closer
+    marginBottom: 12,
   },
   githubLogo: {
-    marginRight: 8,
+    marginRight: 10,
   },
-  githubText: { 
-    color: '#FFFFFF', // White text for contrast
-    fontWeight: 'bold', 
-    fontSize: 14 
+  githubText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

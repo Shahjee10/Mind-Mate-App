@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import FunkyBackButton from '../components/FunkyBackButton';
+import API_BASE_URL from '../apiConfig';
 
 const { width, height } = Dimensions.get('window');
 const isSmallScreen = width < 360;
@@ -61,7 +62,7 @@ const MessageItem = ({ item }) => {
         <Text style={styles.avatarText}>{isUser ? '🙂' : '🤖'}</Text>
       </View>
       <LinearGradient
-        colors={isUser ? ['#8e44ad', '#6a0dad'] : ['#ffffff', '#e6e0fa']}
+        colors={isUser ? ['#E91E63', '#C2185B'] : ['#FFFFFF', '#FFEBEE']}
         style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}
       >
         <Text style={isUser ? styles.userText : styles.assistantText}>{item.content}</Text>
@@ -84,7 +85,6 @@ const SupportScreen = ({ route }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef();
-
   const headerFadeAnim = useRef(new Animated.Value(0)).current;
   const sendBtnScale = useRef(new Animated.Value(1)).current;
   const particleAnims = Array(3)
@@ -135,7 +135,7 @@ const SupportScreen = ({ route }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://192.168.100.21:5000/api/ai/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,27 +215,29 @@ const SupportScreen = ({ route }) => {
   };
 
   return (
-   <SafeAreaView style={styles.safeArea}>
-  <LinearGradient colors={['#4c2882', '#2a1b4d']} style={StyleSheet.absoluteFill} />
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#FFCDD2', '#F06292']} style={StyleSheet.absoluteFill} />
 
-  {/* Back button placed absolutely at top-left corner */}
-  <TouchableOpacity
-    onPress={() => navigation.goBack()}
-    activeOpacity={0.7}
-    style={styles.backButtonContainer}
-    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-  >
-    <FunkyBackButton />
-  </TouchableOpacity>
+      {/* Back button with high zIndex and aligned touch area */}
+      <View style={styles.backButtonContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+          hitSlop={{ top: 30, bottom: 30, left: 30, right: 30 }}
+          style={styles.backButtonTouchable}
+          pointerEvents="box-only"
+        >
+          <FunkyBackButton />
+        </TouchableOpacity>
+      </View>
 
-  {particleAnims.map(renderParticle)}
+      {particleAnims.map(renderParticle)}
 
-  <KeyboardAvoidingView
-    style={styles.container}
-    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 30}
-  >
-   {/* Smaller background container only behind header text */}
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 30}
+      >
         <Animated.View style={[styles.headerContainer, { opacity: headerFadeAnim }]}>
           <Text style={styles.headerTitle}>
             MindMate Helper {moodEmojis[mood] || '🤖'}
@@ -244,6 +246,7 @@ const SupportScreen = ({ route }) => {
             {mood ? `Let's talk about feeling ${mood}` : 'Your AI companion is here!'}
           </Text>
         </Animated.View>
+
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -257,13 +260,13 @@ const SupportScreen = ({ route }) => {
         />
 
         {loading && (
-          <LinearGradient colors={['#9c27b0', '#6a0dad']} style={styles.loadingIndicator}>
-            <ActivityIndicator size="small" color="#fff" />
+          <LinearGradient colors={['#E91E63', '#C2185B']} style={styles.loadingIndicator}>
+            <ActivityIndicator size="small" color="#FFFFFF" />
             <Text style={styles.loadingText}>MindMate is thinking...</Text>
           </LinearGradient>
         )}
 
-        <LinearGradient colors={['#9c27b0', '#6a0dad']} style={styles.inputContainer}>
+        <LinearGradient colors={['#E91E63', '#C2185B']} style={styles.inputContainer}>
           <TextInput
             style={styles.input}
             value={input}
@@ -271,7 +274,7 @@ const SupportScreen = ({ route }) => {
             placeholder="Type your message..."
             multiline
             editable={!loading}
-            placeholderTextColor="#bbb"
+            placeholderTextColor="#EF9A9A"
             returnKeyType="send"
             onSubmitEditing={handleSendPress}
           />
@@ -282,7 +285,7 @@ const SupportScreen = ({ route }) => {
             activeOpacity={0.7}
           >
             <Animated.View style={{ transform: [{ scale: sendBtnScale }] }}>
-              <Ionicons name="send" size={isSmallScreen ? 22 : 24} color="#fff" />
+              <Ionicons name="send" size={isSmallScreen ? 22 : 24} color="#FFFFFF" />
             </Animated.View>
           </TouchableOpacity>
         </LinearGradient>
@@ -294,50 +297,52 @@ const SupportScreen = ({ route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#FFEBEE', // Soft coral background
   },
   container: {
     flex: 1,
+  },
+  backButtonContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: 2000, // High zIndex to ensure touch priority
+  },
+  backButtonTouchable: {
+    padding: 8, // Reduced padding to align touch area with visual
   },
   particle: {
     position: 'absolute',
     width: isSmallScreen ? 8 : 10,
     height: isSmallScreen ? 8 : 10,
     borderRadius: 5,
-    backgroundColor: '#ffffff33',
+    backgroundColor: '#FFFFFF33',
   },
-  header: {
-  paddingHorizontal: 10,
-  paddingTop: isSmallScreen ? 10 : 60,
-  paddingBottom: 20,
-  alignItems: 'center',
-  // Remove background color / gradient here (or keep if you want subtle background)
-},
-
- backButtonContainer: {
-  position: 'absolute',
-  top: 10,
-  left: 0,
-  padding: 12,  // or less if you want it tighter
-  zIndex: 1000,
-},
-
-  headerContent: {
+  headerContainer: {
+    backgroundColor: '#C2185B', // Darker coral for header
+    alignSelf: 'center',
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginTop: isSmallScreen ? 50 : 60, // Avoid overlap with back button
+    marginBottom: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   headerTitle: {
     fontSize: isSmallScreen ? 24 : 28,
-    fontWeight: '900',
-    color: '#fff',
-    letterSpacing: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: isSmallScreen ? 14 : 16,
-    fontWeight: '600',
-    color: '#e0c7ff',
-    fontStyle: 'italic',
+    fontWeight: '500',
+    color: '#FFCDD2',
     marginTop: 4,
   },
   chatList: {
@@ -365,7 +370,7 @@ const styles = StyleSheet.create({
     width: isSmallScreen ? 30 : 36,
     height: isSmallScreen ? 30 : 36,
     borderRadius: 18,
-    backgroundColor: '#ffffff33',
+    backgroundColor: '#FFFFFF33',
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 8,
@@ -378,7 +383,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
@@ -390,12 +395,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   userText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: isSmallScreen ? 15 : 16,
     fontWeight: '600',
   },
   assistantText: {
-    color: '#4a148c',
+    color: '#B71C1C',
     fontSize: isSmallScreen ? 15 : 16,
     fontWeight: '500',
   },
@@ -405,69 +410,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderColor: '#9c27b0',
+    borderColor: '#E91E63',
   },
   loadingText: {
-    color: '#fff',
+    color: '#FFFFFF',
     marginLeft: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     fontSize: isSmallScreen ? 13 : 14,
-    fontStyle: 'italic',
   },
   inputContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderColor: '#9c27b0',
+    borderColor: '#E91E63',
   },
   input: {
     flex: 1,
-    backgroundColor: '#ffffffee',
+    backgroundColor: '#FFFFFF',
     borderRadius: 25,
     paddingHorizontal: 20,
     paddingVertical: Platform.OS === 'ios' ? 14 : 10,
     fontSize: isSmallScreen ? 15 : 16,
-    color: '#4a148c',
+    color: '#B71C1C',
     maxHeight: 100,
-    shadowColor: '#9c27b0',
-    shadowOpacity: 0.3,
+    borderColor: '#FFCDD2',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
   sendBtn: {
     marginLeft: 12,
-    backgroundColor: '#9c27b0',
+    backgroundColor: '#E91E63',
     borderRadius: 25,
     paddingHorizontal: 18,
     paddingVertical: 10,
     justifyContent: 'center',
-    shadowColor: '#7a1fa2',
-    shadowOpacity: 0.5,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 5,
   },
   sendBtnDisabled: {
-    backgroundColor: '#d1a5e0',
-    shadowOpacity: 0.3,
-  },
-
-   headerContainer: {
-    backgroundColor: '#6a0dad', // solid purple background behind text
-    alignSelf: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    marginTop: isSmallScreen ? 50 : 60,
-    marginBottom: 20,
-    alignItems: 'center',
-    shadowColor: '#2c0657',
-    shadowOpacity: 0.7,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
+    backgroundColor: '#F48FB1',
+    shadowOpacity: 0.1,
   },
 });
 

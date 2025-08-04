@@ -1,6 +1,7 @@
 // frontend/utils/githubOAuth.js
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
+import API_BASE_URL from '../apiConfig';
 
 // Import the GitHub client ID from environment variables
 import { GITHUB_CLIENT_ID } from '@env';
@@ -61,8 +62,8 @@ export const loginWithGithub = async () => {
 const sendCodeToBackend = async (code) => {
   try {
     console.log('🔍 Debug - Sending to backend - Code:', code);
-    
-    const response = await fetch('http://192.168.100.21:5000/api/auth/github', {
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/github`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

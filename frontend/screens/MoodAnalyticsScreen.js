@@ -14,6 +14,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import FunkyBackButton from '../components/FunkyBackButton';
 import { useNavigation } from '@react-navigation/native';
+import API_BASE_URL from '../apiConfig';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -53,7 +54,7 @@ const MoodAnalyticsScreen = () => {
   useEffect(() => {
     const fetchMoodData = async () => {
       try {
-        const res = await axios.get('http://192.168.100.21:5000/api/moods/history', {
+        const res = await axios.get(`${API_BASE_URL}/api/moods/history`, {
           headers: { Authorization: `Bearer ${userToken}` },
         });
 

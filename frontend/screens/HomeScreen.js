@@ -6,6 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 // import { useLayoutEffect } from 'react'; // No longer needed since we removed headerShown false
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig'; // adjust the path as per your project structure
+
 
 const { width } = Dimensions.get('window');
 
@@ -46,7 +48,7 @@ const HomeScreen = () => {
       }
 
       try {
-        const response = await axios.get('http://192.168.100.21:5000/api/moods/history', {
+        const response = await axios.get(`${API_BASE_URL}/api/moods/history`, {
           headers: { Authorization: `Bearer ${userToken}` },
         });
 
@@ -247,7 +249,7 @@ const styles = StyleSheet.create({
     color: '#522e69',
   },
   button: {
-    backgroundColor: '#3f51b5',
+    backgroundColor: '#ea8d2aff',
     padding: 14,
     borderRadius: 10,
     marginTop: 20,

@@ -23,7 +23,7 @@ const Stack = createNativeStackNavigator();
 const AuthStack = () => {
   return (
     <Stack.Navigator 
-      initialRouteName="MindMateScreen" // Set MindMateScreen as the initial screen
+      initialRouteName="Login" // Set MindMateScreen as the initial screen
       screenOptions={{
         headerShown: true,
         headerStyle: {

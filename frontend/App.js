@@ -3,9 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import AuthStack from './navigation/AuthStack';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import * as Font from 'expo-font';
-import { View, ActivityIndicator, Alert } from 'react-native';  // <-- Added Alert import
-import HomeStack from './navigation/HomeStack'; // import it
-
+import { View, ActivityIndicator, Alert } from 'react-native';
+import HomeStack from './navigation/HomeStack';
 
 import {
   createDrawerNavigator,
@@ -23,14 +22,13 @@ const Drawer = createDrawerNavigator();
 function CustomDrawerContent(props) {
   const { logout } = useContext(AuthContext);
 
-  // Function to show logout confirmation alert
   const confirmLogout = () => {
     Alert.alert(
       "Logout",
       "Are you sure you want to logout?",
       [
-        { text: "Cancel", style: "cancel" },          // Cancel button
-        { text: "Logout", style: "destructive", onPress: () => logout() }, // Confirm logout
+        { text: "Cancel", style: "cancel" },
+        { text: "Logout", style: "destructive", onPress: () => logout() },
       ],
       { cancelable: true }
     );
@@ -38,27 +36,38 @@ function CustomDrawerContent(props) {
 
   return (
     <DrawerContentScrollView {...props}>
-      {/* Render default drawer items (Home, Account, etc.) */}
       <DrawerItemList {...props} />
-
-      {/* Logout button triggers confirmation */}
       <DrawerItem
         label="Logout"
-        onPress={confirmLogout}  // <-- Changed to call confirmLogout instead of direct logout
+        onPress={confirmLogout}
       />
     </DrawerContentScrollView>
   );
 }
 
-// Drawer shown after login
+// Drawer shown after login with custom styling added here
 const AppDrawer = () => {
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       initialRouteName="HomeStack"
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        drawerStyle: {
+          width: 250,
+          backgroundColor: '#E6F4F1',
+          borderTopRightRadius: 20,
+          borderBottomRightRadius: 20,
+          shadowColor: '#000',
+          shadowOpacity: 0.1,
+          shadowRadius: 10,
+          elevation: 5,
+        },
+        drawerActiveTintColor: '#00695C',
+        drawerInactiveTintColor: '#004D40',
+        drawerLabelStyle: { fontSize: 16, fontWeight: '600' },
+      }}
     >
-      {/* Use MoodStack as the Home screen with all nested routes */}
       <Drawer.Screen
         name="HomeStack"
         component={HomeStack}
@@ -68,8 +77,6 @@ const AppDrawer = () => {
     </Drawer.Navigator>
   );
 };
-
-
 
 // Root navigator decides which stack to show based on auth
 const RootNavigator = () => {

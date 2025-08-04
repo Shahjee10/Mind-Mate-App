@@ -11,6 +11,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
+import API_BASE_URL from '../apiConfig';
 
 const OtpVerificationScreen = ({ route, navigation }) => {
   const { email } = route.params;
@@ -20,7 +21,7 @@ const OtpVerificationScreen = ({ route, navigation }) => {
     if (!otp) return Alert.alert('Error', 'Please enter the OTP.');
 
     try {
-      const response = await fetch('http://192.168.100.21:5000/api/auth/otp/verify', {
+     const response = await fetch(`${API_BASE_URL}/api/auth/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp }),

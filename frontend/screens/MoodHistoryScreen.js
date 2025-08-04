@@ -11,6 +11,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import FunkyBackButton from '../components/FunkyBackButton'; // Make sure path is correct
+import API_BASE_URL from '../apiConfig';
 
 const moodConfig = {
   Happy:   { emoji: '😄', color: '#FFE082' },
@@ -34,7 +35,7 @@ const MoodHistoryScreen = () => {
       }
 
       try {
-        const response = await axios.get('http://192.168.100.21:5000/api/moods/history', {
+        const response = await axios.get(`${API_BASE_URL}/api/moods/history`, {
           headers: { Authorization: `Bearer ${userToken}` },
         });
 

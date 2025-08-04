@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+import API_BASE_URL from '../apiConfig';  // adjust relative path as needed
 
 const ForgotPasswordScreen = () => {
   const navigation = useNavigation();
@@ -34,7 +35,7 @@ const ForgotPasswordScreen = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post('http://192.168.100.21:5000/api/auth/request-password-reset', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/request-password-reset`, {
         email,
       });
 
@@ -65,7 +66,7 @@ const ForgotPasswordScreen = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post('http://192.168.100.21:5000/api/auth/reset-password', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/reset-password`, {
         email,
         otp,
         newPassword,
@@ -166,7 +167,7 @@ const ForgotPasswordScreen = () => {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.resendButton} 
+              style={[styles.resendButton, loading && styles.buttonDisabled]} 
               onPress={handleResendOtp}
               disabled={loading}
             >
@@ -186,41 +187,36 @@ const ForgotPasswordScreen = () => {
 export default ForgotPasswordScreen;
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F5F6FA', // Light grayish-blue background
+  container: {
+    flex: 1,
+    backgroundColor: '#F3E5F5', // Light lavender background
   },
-  scrollContainer: { 
-    flexGrow: 1, 
-    justifyContent: 'center', 
-    padding: 15,
-    paddingBottom: 30,
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 24,
+    justifyContent: 'center',
   },
-  title: { 
-    fontSize: 28, 
-    fontWeight: '600', 
-    marginBottom: 8, 
-    textAlign: 'center', 
-    color: '#2E7D32', // Green for calmness
-    fontFamily: 'cursive',
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#4A0072', // Dark purple for title
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  subtitle: { 
-    fontSize: 14, 
-    color: '#424242', 
-    textAlign: 'center', 
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#6A1B9A', // Medium purple for subtitle
     marginBottom: 25,
-    fontStyle: 'italic',
-    fontFamily: 'cursive',
   },
   input: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#B0BEC5', // Light blue-gray border
     borderRadius: 12,
-    padding: 12,
+    padding: 14,
+    fontSize: 16,
     marginBottom: 12,
-    fontSize: 14,
-    color: '#424242',
+    borderColor: '#CE93D8', // Light purple border
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -228,11 +224,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   button: {
-    backgroundColor: '#66BB6A', // Soft green button
-    paddingVertical: 12,
+    backgroundColor: '#7B1FA2', // Primary purple button
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 6, // Reduced margin to bring buttons closer
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -242,33 +238,33 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: { 
-    color: '#fff', 
-    fontWeight: 'bold', 
-    fontSize: 14 
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
   resendButton: {
-    backgroundColor: '#42A5F5', // Bright blue for resend
-    paddingVertical: 10,
+    backgroundColor: '#9C27B0', // Secondary purple for resend
+    paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 12, // Space before link
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
-  resendText: { 
-    color: '#fff', 
-    fontWeight: 'bold', 
-    fontSize: 14 
+  resendText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 15,
   },
-  link: { 
-    color: '#1976D2', // Deep blue for link
-    textAlign: 'center', 
-    marginTop: 10, 
-    fontSize: 14,
-    fontFamily: 'cursive',
+  link: {
+    color: '#9C27B0', // Accent purple for link
+    textAlign: 'center',
+    marginTop: 8,
+    textDecorationLine: 'underline',
+    fontSize: 15,
   },
 });

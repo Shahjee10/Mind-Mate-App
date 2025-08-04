@@ -20,6 +20,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import FunkyBackButton from '../components/FunkyBackButton';
+import API_BASE_URL from '../apiConfig';
 
 const { width, height } = Dimensions.get('window');
 const isSmallScreen = width < 360;
@@ -65,11 +66,11 @@ const MoodInputScreen = () => {
     if (!selectedMood) return alert('Please select a mood.');
 
     try {
-      await axios.post(
-        'http://192.168.100.21:5000/api/moods/add',
-        { mood: selectedMood, note },
-        { headers: { Authorization: `Bearer ${userToken}` } }
-      );
+     await axios.post(
+  `${API_BASE_URL}/api/moods/add`,
+  { mood: selectedMood, note },
+  { headers: { Authorization: `Bearer ${userToken}` } }
+);
       alert('Mood saved successfully!');
       setNote('');
       navigation.navigate('VersePopupScreen', { mood: selectedMood });
@@ -135,13 +136,14 @@ const MoodInputScreen = () => {
               <Text style={styles.prompt}>What made you feel this way?</Text>
               <TextInput
                 placeholder="Share your thoughts..."
-                placeholderTextColor="#bbb"
+                placeholderTextColor="white"
                 style={styles.input}
                 multiline
                 numberOfLines={6}
                 value={note}
                 onChangeText={setNote}
                 textAlignVertical="top"
+                backgroundColor="#77027dff"
               />
               <TouchableOpacity
                 style={styles.saveBtn}

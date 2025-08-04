@@ -15,9 +15,10 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker'; // ✅ Required for avatar picker
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../apiConfig';
 
 
-const BASE_URL = 'http://192.168.100.21:5000';
+const BASE_URL = API_BASE_URL;
 
 const githubLogoUri =
   'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
