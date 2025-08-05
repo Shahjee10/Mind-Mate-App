@@ -10,13 +10,13 @@ import {
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
-import FunkyBackButton from '../components/FunkyBackButton'; // Make sure path is correct
+import FunkyBackButton from '../components/FunkyBackButton';
 import API_BASE_URL from '../apiConfig';
 
 const moodConfig = {
-  Happy:   { emoji: '😄', color: '#FFE082' },
-  Sad:     { emoji: '😢', color: '#E1BEE7' },
-  Angry:   { emoji: '😠', color: '#EF5350' },  // Slightly stronger red
+  Happy: { emoji: '😄', color: '#FFE082' },
+  Sad: { emoji: '😢', color: '#E1BEE7' },
+  Angry: { emoji: '😠', color: '#EF5350' },
   Excited: { emoji: '🤩', color: '#B2DFDB' },
   Neutral: { emoji: '😐', color: '#CFD8DC' },
 };
@@ -42,7 +42,9 @@ const MoodHistoryScreen = () => {
         // Group moods by date string
         const grouped = response.data.reduce((acc, item) => {
           const date = new Date(item.createdAt).toLocaleDateString('en-GB', {
-            day: '2-digit', month: 'long', year: 'numeric',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
           });
           if (!acc[date]) acc[date] = [];
           acc[date].push(item);
@@ -105,18 +107,22 @@ const MoodHistoryScreen = () => {
         sections={moodHistory}
         keyExtractor={(item, index) => item._id + index}
         renderSectionHeader={({ section: { title } }) => (
-          <Text style={styles.sectionHeader}>{title}</Text>
+          <View style={styles.sectionHeaderContainer}>
+            <Text style={styles.sectionHeader}>{title}</Text>
+          </View>
         )}
         renderItem={({ item }) => {
           const normalizedMood = item.mood?.trim().toLowerCase();
 
           // Defensive: find key matching normalizedMood (case insensitive)
           const matchedKey = Object.keys(moodConfig).find(
-            key => key.toLowerCase() === normalizedMood
+            (key) => key.toLowerCase() === normalizedMood
           );
 
           // Use found config or fallback
-          const config = matchedKey ? moodConfig[matchedKey] : { emoji: '😶', color: '#E0E0E0' };
+          const config = matchedKey
+            ? moodConfig[matchedKey]
+            : { emoji: '😶', color: '#E0E0E0' };
 
           const time = new Date(item.createdAt).toLocaleTimeString([], {
             hour: '2-digit',
@@ -140,6 +146,7 @@ const MoodHistoryScreen = () => {
         }}
         contentContainerStyle={{ paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
+        stickySectionHeadersEnabled={true} // Fix section headers
       />
     </View>
   );
@@ -148,7 +155,7 @@ const MoodHistoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-   backgroundColor: '#f0f4f8',
+    backgroundColor: '#f0f4f8',
     paddingHorizontal: 0,
     paddingTop: 0,
   },
@@ -165,13 +172,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginTop: 100,
   },
+  sectionHeaderContainer: {
+    backgroundColor: '#f0f4f8', // Match container background
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
   sectionHeader: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
     marginTop: 20,
-    paddingHorizontal: 16,
   },
   card: {
     borderRadius: 16,

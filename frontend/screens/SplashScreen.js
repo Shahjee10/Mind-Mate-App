@@ -22,7 +22,7 @@ export default function SplashScreen({ navigation }) {
     // Start button fade-in animation
     Animated.timing(fadeAnimButton, {
       toValue: 1,
-      duration: 700,
+      duration: 800,
       useNativeDriver: true,
     }).start();
   };

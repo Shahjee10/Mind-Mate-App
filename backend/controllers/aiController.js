@@ -12,22 +12,22 @@ export const chatWithMindMate = async (req, res) => {
       return res.status(400).json({ error: 'Invalid messages format' });
     }
 
-    // Format conversation for Cohere
+    // Format conversation and add instruction to guide the model
     const conversation = messages
       .map(m => (m.role === 'user' ? 'User: ' : 'MindMate: ') + m.content)
-      .join('\n') + '\nMindMate:';
+      .join('\n') +
+      `\nUser: Please answer briefly and to the point, within 2-3 sentences.\nMindMate:`;
 
-    // Make request to Cohere API
+    // Request to Cohere API with precise control
     const response = await co.chat({
       model: 'command-xlarge-nightly',
       message: conversation,
-      max_tokens: 100,
-      temperature: 0.7,
+      max_tokens: 80, // ⬅️ Keep it tight for short answers
+      temperature: 0.4, // ⬅️ Lower temp = more focused
     });
 
     console.log('🧠 Cohere Response:', JSON.stringify(response, null, 2));
 
-    // ✅ Correct structure based on your log
     if (response.text) {
       const reply = response.text.trim();
       res.json({ reply });
